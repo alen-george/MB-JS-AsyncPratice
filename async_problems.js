@@ -104,7 +104,8 @@ const storeData = async (response) => {
   let solutionA = response;
   let solutionB = groupTaskbyUserID(response);
   let solutionC = groupTaskByStatus(response);
-  let userIDsTodo = getInfoOfUsers(response);
+  let userIDsTodo = await getInfoOfUsers(response);
+
   // dumpToFile(solutionA,solutionB,solutionC)
 };
 
@@ -149,48 +150,46 @@ Q2. Write a method that returns a promise to read a File (use fs.readFile inside
 
 function readsFile(path, transForm) {
   return new Promise((resolve, reject) => {
-    if (path === "output1.json") {
-      resolve(
         readFile(path, "utf-8", (err, data) => {
-          if (err) throw err;
-          transForm(data);
-        })
+          if(err) {
+            reject("Missing File.");
+          }
+          else {
+           resolve(transForm(data));
+          }
+        }
       );
-    } else {
-      reject("Missing File.");
-    }
-  });
+    } 
+      
+  );
 }
 
 const transForm = (data) => {
   const parsedData = JSON.parse(data);
-  let arrayOfData = [];
-  Object.keys(parsedData).forEach((key) => {
-    arrayOfData.push(parsedData[key]);
-  });
+  let arrayOfData =Object.keys(parsedData).map((key) => parsedData[key]);
+  
 
   console.log(arrayOfData);
 
   return arrayOfData;
 };
 
-readsFile("output1.json", transForm);
+// readsFile("output1.json", transForm);
 
 /*
 Q3. Write a function to get all the users information from the users API url. Find all the users with name "Nicholas". 
 Get all the to-dos for those user ids.*/
 function userByName(data, toDoData) {
   const userIDFiltered = data.reduce((res, elem) => {
-    if (elem.name.includes("Nicholas")) {
-      res.push(elem.id);
+    if (elem.name.split(' ')[0]=="Nicholas") {
+    
+      res.push(toDoData.filter((toDoelem) => toDoelem.userId == elem.id));
     }
+
     return res;
   }, []);
-  let toDosOfFilteredUser = userIDFiltered.map((id) => {
-    return toDoData.filter((elem) => elem.userId == id);
-  });
-  //    console.log(toDosOfFilteredUser)
-  return toDosOfFilteredUser;
+
+  return userIDFiltered;
 }
 
 async function getInfoOfUsers(toDoData) {
@@ -245,3 +244,40 @@ function getDataOfUsers2(...userIDs) {
     .then((response) => console.log(response.data));
 }
 // getDataOfUsers2(8,9,10)
+
+/*
+Q5. Promisify the following "sayHelloWorld" function 
+
+    const sayHelloWorld = () => {
+        window.setTimeout(() => {
+            console.log('Hello World')
+        }, 1000)
+
+        return;
+    }
+
+    (function executeSayHelloWorld () {
+        sayHelloWorld();
+        console.log('Hey');
+    })()
+
+    Note: You need to execute Question 5 on browser due to window.setTimeout.
+    Upon running the function in browser you would notice ..that 
+    "Hey" gets printed first and then "Hello World".
+    Promisify sayHelloWorld so that.."Hello World" gets printed first and then "Hey".
+
+*/
+
+const sayHelloWorld = () => {
+  return new Promise(
+  window.setTimeout(() => {
+      console.log('Hello World')
+  }, 1000)
+  )
+
+}
+
+(function executeSayHelloWorld () {
+  sayHelloWorld();
+  console.log('Hey');
+})()
